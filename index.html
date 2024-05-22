@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拿糖遊戲</title>
+    <style>
+        #dialogue-box {
+            height: 130px;
+            overflow-y: scroll;
+            border: 1px solid #3c3838;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+
+        .rps-btn{
+            height: 50px;
+            width: 60px;
+            font-size: 17px;
+        }
+        .candy-btn{
+            height: 50px;
+            width: 60px;
+            font-size: 17px;
+        }
+
+        @keyframes typing {
+            from {
+                width: 0;
+            }
+            to {
+                width: auto;
+            }
+        }
+
+        @keyframes blink-caret {
+            from,
+            to {
+                border-color: transparent;
+            }
+            50% {
+                border-color: black;
+            }
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            let N;
+            let T;
+            const dialogueBox = document.getElementById("dialogue-box");
+            const buttons = document.querySelectorAll(".candy-btn");
+            const rpsButtons = document.querySelectorAll(".rps-btn");
+
+            function updateDialogue(message) {
+                dialogueBox.innerHTML += message + "<br>";
+                dialogueBox.scrollTop = dialogueBox.scrollHeight;
+            }
+
+            function typeWriter(text, i, fnCallback) {
+                if (i < text.length) {
+                    dialogueBox.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(() => {
+                        typeWriter(text, i, fnCallback);
+                        
+                    }, 50);
+                } else {
+                    dialogueBox.innerHTML += "<br>";
+                    if (typeof fnCallback == "function") {
+                        setTimeout(fnCallback, 700);
+                    }
+                }
+            }
+
+            function playerTurn() {
+                dialogueBox.innerHTML = '';
+                typeWriter(`\n剩餘 ${N} 顆糖果`, 0, () => {
+                    typeWriter(`\n你的回合：請拿取1~3顆糖果`, 0, () => {
+                        buttons.forEach(button => button.disabled = false);
+                    });
+                });
+            }
+
+            function computerTurn() {
+                let p = N % 4 - 1;
+                if (p === -1) p = 3;
+                else if (p === 0) p = Math.floor(Math.random() * 3) + 1;
+                if (p > N) p = 1;
+                typeWriter(`電腦的回合：`, 0, () => {
+                    typeWriter(`電腦拿了 ${p} 顆糖`, 0, () => {
+                        T = !T;
+                        N -= p;
+                        checkGameOver();
+                    });
+                });
+            }
+
+            function checkGameOver() {
+                if (N > 0) {
+                    T ? playerTurn() : computerTurn();
+                } else {
+                    dialogueBox.innerHTML = '';
+                    if (!T) typeWriter("你輸了!", 0);
+                    else typeWriter("你贏了!請向攤主領獎", 0);
+                    buttons.forEach(button => button.disabled = true);
+                }
+            }
+
+            function startGame() {
+                N = Math.floor(Math.random() * 36) + 15;
+                typeWriter(`碗中有 ${N} 顆糖`, 0, () => {
+                    dialogueBox.innerHTML = '';
+                    checkGameOver();
+                });
+            }
+
+            function rpsOutcome(playerChoice) {
+                const choices = ["石頭", "布", "剪刀"];
+                const computerChoice = choices[Math.floor(Math.random() * 3)];
+                rpsButtons.forEach(button => button.disabled = true);
+                dialogueBox.innerHTML = '';
+                typeWriter(`你出 ${playerChoice}，電腦出 ${computerChoice}`, 0, () => {
+                    if (playerChoice === computerChoice) {
+                        dialogueBox.innerHTML = '';
+                        typeWriter("平手，請再猜一次", 0, ()=>{
+                            rpsButtons.forEach(button => button.disabled = false);
+                        });
+                        
+                        return;
+                    }
+
+                    if (
+                        (playerChoice === "石頭" && computerChoice === "剪刀") ||
+                        (playerChoice === "布" && computerChoice === "石頭") ||
+                        (playerChoice === "剪刀" && computerChoice === "布")
+                    ) {
+                        typeWriter("\n由你先拿糖果", 0);
+                        T = true;
+                    } else {
+                        typeWriter("\n由電腦先拿糖果", 0);
+                        T = false;
+                    }
+                    
+                    setTimeout(() => {
+                        startGame();
+                    }, 1000);
+                    
+                });
+            }
+
+            rpsButtons.forEach(button => {
+                button.addEventListener("click", () => {
+                    rpsOutcome(button.value);
+                });
+            });
+
+            buttons.forEach(button => {
+                button.addEventListener("click", () => {
+                    buttons.forEach(button => button.disabled = true);
+                    let p = parseInt(button.value);
+                    if(p>N) p=N;
+                    N -= p;
+                    typeWriter(`你拿了 ${p} 顆糖，剩餘 ${N} 顆糖`, 0, () => {
+                        T = !T;
+                        
+                        checkGameOver();
+                    });
+                });
+            });
+            dialogueBox.innerHTML = '規則：每次只能拿1到3顆糖<br>當拿到最後一顆就輸了<br>贏了可以向攤主領取獎勵<br>';
+            
+            setTimeout(() => {
+                typeWriter("猜拳進行先後順序", 0);
+                rpsButtons.forEach(button => button.disabled = false);
+            }, 2000);
+            
+        });
+    </script>
+</head>
+<body>
+    <h1>拿糖遊戲</h1>
+    
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/User_icon_2.svg/1200px-User_icon_2.svg.png" style="height: 100px;width: 100px;">
+    <img src="https://e7.pngegg.com/pngimages/305/326/png-clipart-vs-vs-two-eleven-came-thumbnail.png" style="height: 100px;width: 100px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Ameca_Generation_1.jpg/800px-Ameca_Generation_1.jpg" style="height: 100px;width: 100px;">
+    
+    <br><br>
+    <div id="dialogue-box"></div>
+    <button class="rps-btn" value="石頭" disabled>石頭</button>
+    <button class="rps-btn" value="布" disabled>布</button>
+    <button class="rps-btn" value="剪刀" disabled>剪刀</button>
+    <br><br>
+    <button class="candy-btn" value="1" disabled>1</button>
+    <button class="candy-btn" value="2" disabled>2</button>
+    <button class="candy-btn" value="3" disabled>3</button>
+</body>
+</html>
+
